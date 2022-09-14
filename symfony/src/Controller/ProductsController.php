@@ -14,6 +14,7 @@ class ProductsController extends AbstractController
 
     public function __construct()
     {
+
         $this->nowDate = new \DateTime();
     }
 

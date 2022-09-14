@@ -3,18 +3,20 @@
 namespace App\Controller;
 
 use App\Entity\Orders;
-use App\Entity\OrdersShippingDate;
-use App\Entity\ShippingDate;
+use App\Entity\Quantity;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 
+
 class OrderController extends AbstractController
 {
     public function __construct()
     {
+        $this->denyAccessUnlessGranted('IS_AUTHENTICATED_FULLY');
+
         $this->nowDate = new \DateTime();
         $min = 100000000;
         $max = 999999999;
@@ -50,8 +52,6 @@ class OrderController extends AbstractController
         $param = json_decode($request->getContent(),true);
 
         $order->setOrderCode($this->orderCode);
-        $order->setProductId($param['product_id']);
-        $order->setQuantity($param['quantity']);
         $order->setAddress($param['address']);
         $order->setCreatedAt($this->nowDate);
         $create = $this->getDoctrine()->getManager();
@@ -114,22 +114,11 @@ class OrderController extends AbstractController
     }
 
     /**
-     * @Route("/orders/{id}", name="orders_detail", methods={"GET"})
+     * @Route("/orders-detail/{id}", name="orders_detail", methods={"GET"})
      */
-    public function orderDetail(Request $request, $id): Response
+    public function orderDetail($id): Response
     {
-        $res = '';
-        $orderRespository = $this->getDoctrine()->getRepository(Orders::class)->find($id);
-        foreach ($orderRespository as $data){
-            $res = [
-                'id' => $data->getId(),
-                'order_code' => $data->getOrderCode(),
-                'address' => $data->getAddress(),
-                'created_at' => $data->getCreatedAt(),
-                'updated_at' => $data->getUpdatedAt(),
-                'deleted_at' => $data->getDeletedAt(),
-            ];
-        }
-        return $this->json($res);
+        $repository = $this->getDoctrine()->getRepository(Orders::class)->find($id);
+        return $this->json($repository);
     }
 }

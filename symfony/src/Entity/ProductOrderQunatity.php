@@ -2,13 +2,13 @@
 
 namespace App\Entity;
 
-use App\Repository\OrdersRepository;
+use App\Repository\ProductOrderQunatityRepository;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
- * @ORM\Entity(repositoryClass=OrdersRepository::class)
+ * @ORM\Entity(repositoryClass=ProductOrderQunatityRepository::class)
  */
-class Orders
+class ProductOrderQunatity
 {
     /**
      * @ORM\Id
@@ -18,18 +18,19 @@ class Orders
     private $id;
 
     /**
-     * @ORM\Column(type="string", length=255)
+     * @ORM\Column(type="integer")
      */
-    private $order_code;
+    private $order_id;
 
     /**
-     * @ORM\Column(type="text")
+     * @ORM\Column(type="integer")
      */
-    private $address;
+    private $product_id;
+
     /**
-     * @ORM\Column(type="datetime", nullable=true)
+     * @ORM\Column(type="integer")
      */
-    private $shipping_date;
+    private $quantity_id;
 
     /**
      * @ORM\Column(type="datetime", nullable=true)
@@ -46,55 +47,53 @@ class Orders
      */
     private $deleted_at;
 
-
     public function getId(): ?int
     {
         return $this->id;
     }
 
-    public function getOrderCode(): ?string
+    public function getOrderId(): ?int
     {
-        return $this->order_code;
+        return $this->order_id;
     }
 
-    public function setOrderCode(string $order_code): self
+    public function setOrderId(int $order_id): self
     {
-        $this->order_code = $order_code;
+        $this->order_id = $order_id;
 
         return $this;
     }
 
-    public function getAddress(): ?string
+    public function getProductId(): ?int
     {
-        return $this->address;
+        return $this->product_id;
     }
 
-    public function setAddress(string $address): self
+    public function setProductId(int $product_id): self
     {
-        $this->address = $address;
+        $this->product_id = $product_id;
 
         return $this;
     }
 
-    public function getShippingDate(): ?\DateTimeInterface
+    public function getQuantityId(): ?int
     {
-        return $this->shipping_date;
+        return $this->quantity_id;
     }
 
-    public function setShippingDate(\DateTimeInterface $shipping_date): self
+    public function setQuantityId(int $quantity_id): self
     {
-        $this->shipping_date = $shipping_date;
+        $this->quantity_id = $quantity_id;
 
         return $this;
     }
-
 
     public function getCreatedAt(): ?\DateTimeInterface
     {
         return $this->created_at;
     }
 
-    public function setCreatedAt(\DateTimeInterface $created_at): self
+    public function setCreatedAt(?\DateTimeInterface $created_at): self
     {
         $this->created_at = $created_at;
 
@@ -124,5 +123,4 @@ class Orders
 
         return $this;
     }
-
 }
