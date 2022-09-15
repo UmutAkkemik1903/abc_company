@@ -3,29 +3,33 @@
 namespace App\Controller;
 
 use App\Entity\Orders;
+use App\Entity\ProductOrderQunatity;
+use App\Entity\Products;
 use App\Entity\Quantity;
+use App\Repository\OrdersRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
+use Doctrine\Persistence\ManagerRegistry;
 
 
 class OrderController extends AbstractController
 {
-    public function __construct()
+    public $nowDate;
+    public $orderCode;
+    public function __construct($args = 'now')
     {
-        $this->denyAccessUnlessGranted('IS_AUTHENTICATED_FULLY');
-
-        $this->nowDate = new \DateTime();
+        $this->nowDate = new \DateTimeImmutable($args);
         $min = 100000000;
         $max = 999999999;
-        $sc = "SC";
+        $sc = "OC";
         $this->orderCode =$sc.rand($min,$max);
     }
 
     /**
-     * @Route("/orders", name="orders", methods={"GET"})
+     * @Route("/api/orders", name="orders", methods={"GET"})
      */
     public function index(): JsonResponse
     {
@@ -44,11 +48,13 @@ class OrderController extends AbstractController
     }
 
     /**
-     * @Route("/orders", name="orders_create", methods={"POST"})
+     * @Route("/api/orders", name="orders_create", methods={"POST"})
      */
     public function create(Request $request): Response
     {
         $order = new Orders();
+        $quantity = new Quantity();
+        $pOq = new ProductOrderQunatity();
         $param = json_decode($request->getContent(),true);
 
         $order->setOrderCode($this->orderCode);
@@ -57,12 +63,30 @@ class OrderController extends AbstractController
         $create = $this->getDoctrine()->getManager();
         $create->persist($order);
         $create->flush();
+        $id = $order->getId();
+
+        $quantity->setQuantity($param['quantity']);
+        $quantity->setCreatedAt($this->nowDate);
+        $createQ = $this->getDoctrine()->getManager();
+        $createQ->persist($quantity);
+        $createQ->flush();
+        $quantityId = $quantity->getId();
+
+        $user = $this->get('security.token_storage')->getToken()->getUser()->getId();
+        $pOq->setProductId($param['product_id']);
+        $pOq->setOrderId($id);
+        $pOq->setQuantityId($quantityId);
+        $pOq->setUserId($user);
+        $createOq = $this->getDoctrine()->getManager();
+        $createOq->persist($pOq);
+        $createOq->flush();
 
         return $this->json('Successfully');
 
     }
+
     /**
-     * @Route("/shipping-date", name="shipping_date", methods={"POST"})
+     * @Route("/api/shipping-date", name="shipping_date", methods={"POST"})
      */
     public function shipping_date(Request $request): Response
     {
@@ -78,19 +102,38 @@ class OrderController extends AbstractController
 
     }
     /**
-     * @Route("/orders/{id}", name="orders_update", methods={"PUT"})
+     * @Route("/api/orders/{id}", name="orders_update", methods={"PUT"})
      */
     public function update(Request $request, $id): Response{
 
-        $data = $this->getDoctrine()->getRepository(Orders::class)->find($id);
+        $productOrderQuantityData = $this->getDoctrine()->getRepository(ProductOrderQunatity::class)->find($id);
+        $orderData = $this->getDoctrine()->getRepository(Orders::class)->find($productOrderQuantityData->getOrderId());
+        $quantityData = $this->getDoctrine()->getRepository(Quantity::class)->find($productOrderQuantityData->getQuantityId());
         $param = json_decode($request->getContent(),true);
-        if ($data->getShippingDate() === null)
+        if ($orderData->getId() && $orderData->getShippingDate() === null)
         {
-            $data->setAddress($param['address']);
-            $data->setUpdatedAt($this->nowDate);
-            $update = $this->getDoctrine()->getManager();
-            $update->persist($data);
-            $update->flush();
+                $orderData->setAddress($param['address']);
+                $orderData->setUpdatedAt($this->nowDate);
+                $update = $this->getDoctrine()->getManager();
+                $update->persist($orderData);
+                $update->flush();
+                $orderId = $orderData->getId();
+
+            if ($quantityData->getId())
+            {
+                $quantityData->setQuantity($param['quantity']);
+                $quantityData->setUpdatedAt($this->nowDate);
+                $updateQ = $this->getDoctrine()->getManager();
+                $updateQ->persist($quantityData);
+                $updateQ->flush();
+                $quantityId = $quantityData->getId();
+            }
+                $productOrderQuantityData->setProductId($param['product_id']);
+                $productOrderQuantityData->setOrderId($orderId);
+                $productOrderQuantityData->setQuantityId($quantityId);
+                $updateOq = $this->getDoctrine()->getManager();
+                $updateOq->persist($productOrderQuantityData);
+                $updateOq->flush();
 
             return $this->json('Successfully');
         } else{
@@ -99,7 +142,7 @@ class OrderController extends AbstractController
 
     }
     /**
-     * @Route("/orders/{id}", name="orders_delete", methods={"DELETE"})
+     * @Route("/api/orders/{id}", name="orders_delete", methods={"DELETE"})
      */
     public function delete(Request $request, $id): Response
     {
@@ -114,11 +157,13 @@ class OrderController extends AbstractController
     }
 
     /**
-     * @Route("/orders-detail/{id}", name="orders_detail", methods={"GET"})
+     * @Route("/api/orders-detail/{id}", name="orders_detail", methods={"GET"})
      */
-    public function orderDetail($id): Response
+    public function show(int $id, OrdersRepository $ordersRepository): Response
     {
-        $repository = $this->getDoctrine()->getRepository(Orders::class)->find($id);
-        return $this->json($repository);
+        $orders = $ordersRepository
+            ->find($id);
+
+        return $this->json($orders);
     }
 }

@@ -33,6 +33,11 @@ class ProductOrderQunatity
     private $quantity_id;
 
     /**
+     * @ORM\Column(type="integer")
+     */
+    private $user_id;
+
+    /**
      * @ORM\Column(type="datetime", nullable=true)
      */
     private $created_at;
@@ -84,6 +89,18 @@ class ProductOrderQunatity
     public function setQuantityId(int $quantity_id): self
     {
         $this->quantity_id = $quantity_id;
+
+        return $this;
+    }
+
+    public function getUserId(): ?int
+    {
+        return $this->user_id;
+    }
+
+    public function setUserId(int $user_id): self
+    {
+        $this->user_id = $user_id;
 
         return $this;
     }

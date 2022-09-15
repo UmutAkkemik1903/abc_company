@@ -13,6 +13,7 @@
         "doctrine/doctrine-migrations-bundle": "^3.2",
         "doctrine/orm": "^2.13",
         "lexik/jwt-authentication-bundle": "^2.16",
+        "symfony/apache-pack": "^1.0",
         "symfony/console": "5.4.*",
         "symfony/dotenv": "5.4.*",
         "symfony/flex": "^1.17|^2",
@@ -23,6 +24,7 @@
         "symfony/yaml": "5.4.*"
     },
     "require-dev": {
+        "doctrine/doctrine-fixtures-bundle": "^3.4",
         "symfony/debug-bundle": "5.4.*",
         "symfony/maker-bundle": "^1.43"
     },
@@ -56,7 +58,8 @@
     "scripts": {
         "auto-scripts": {
             "cache:clear": "symfony-cmd",
-            "assets:install %PUBLIC_DIR%": "symfony-cmd"
+            "assets:install %PUBLIC_DIR%": "symfony-cmd",
+            "lexik:jwt:generate-keypair": "symfony-cmd"
         },
         "post-install-cmd": [
             "@auto-scripts"

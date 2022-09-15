@@ -18,7 +18,7 @@ class PropertiesController extends AbstractController
     }
 
     /**
-     * @Route("/properties", name="properties", methods={"GET"})
+     * @Route("/api/properties", name="properties", methods={"GET"})
      */
     public function index(): JsonResponse
     {
@@ -36,7 +36,7 @@ class PropertiesController extends AbstractController
     }
 
     /**
-     * @Route("/properties", name="properties_create", methods={"POST"})
+     * @Route("/api/properties", name="properties_create", methods={"POST"})
      */
     public function create(Request $request): Response
     {
@@ -53,7 +53,7 @@ class PropertiesController extends AbstractController
     }
 
     /**
-     * @Route("/properties/{id}", name="properties_update", methods={"PUT"})
+     * @Route("/api/properties/{id}", name="properties_update", methods={"PUT"})
      */
     public function update(Request $request, $id): Response{
 
@@ -69,7 +69,7 @@ class PropertiesController extends AbstractController
         return $this->json('Successfully');
     }
     /**
-     * @Route("/properties/{id}", name="properties_delete", methods={"DELETE"})
+     * @Route("/api/properties/{id}", name="properties_delete", methods={"DELETE"})
      */
     public function delete(Request $request, $id): Response
     {

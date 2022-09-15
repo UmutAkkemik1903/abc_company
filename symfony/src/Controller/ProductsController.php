@@ -19,7 +19,7 @@ class ProductsController extends AbstractController
     }
 
     /**
-     * @Route("/products", name="app_products", methods={"GET"})
+     * @Route("/api/products", name="app_products", methods={"GET"})
      */
     public function index(): JsonResponse
     {
@@ -39,7 +39,7 @@ class ProductsController extends AbstractController
     }
 
     /**
-     * @Route("/products", name="products_create", methods={"POST"})
+     * @Route("/api/products", name="products_create", methods={"POST"})
      */
     public function create(Request $request): Response
     {
@@ -58,7 +58,7 @@ class ProductsController extends AbstractController
 
     }
     /**
-     * @Route("/products/{id}", name="products_update", methods={"PUT"})
+     * @Route("/api/products/{id}", name="products_update", methods={"PUT"})
      */
     public function update(Request $request, $id): Response{
 
@@ -76,7 +76,7 @@ class ProductsController extends AbstractController
         return $this->json('Successfully');
     }
     /**
-     * @Route("/products/{id}", name="product_delete", methods={"DELETE"})
+     * @Route("/api/products/{id}", name="product_delete", methods={"DELETE"})
      */
     public function delete(Request $request, $id): Response
     {
