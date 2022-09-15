@@ -5,6 +5,7 @@ kullanıcı adları ve şifreleri vardır. Müşteriler Restful servislerini kul
 
 # Kurulum
 .env dosyasında DATABASE_URL ayarlamasını yapın.
+<br/>
 "config" klasörünün altında "jwt" adında klasör oluşturun.
 ## Terminal ekranında;
 <br/>
