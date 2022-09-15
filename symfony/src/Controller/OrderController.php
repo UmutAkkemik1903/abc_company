@@ -6,6 +6,7 @@ use App\Entity\Orders;
 use App\Entity\ProductOrderQunatity;
 use App\Entity\Products;
 use App\Entity\Quantity;
+use App\Entity\User;
 use App\Repository\OrdersRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -33,8 +34,9 @@ class OrderController extends AbstractController
      */
     public function index(): JsonResponse
     {
-        $orderRespository = $this->getDoctrine()->getRepository(Orders::class)->findAll();
-        foreach ($orderRespository as $data){
+        $user = $this->get('security.token_storage')->getToken()->getUser()->getId();
+        $orderData = $this->getDoctrine()->getRepository(Orders::class)->findBy(['user_id'=>$user]);
+        foreach ($orderData as $data){
             $res[] = [
                 'id' => $data->getId(),
                 'order_code' => $data->getOrderCode(),
@@ -52,6 +54,7 @@ class OrderController extends AbstractController
      */
     public function create(Request $request): Response
     {
+        $user = $this->get('security.token_storage')->getToken()->getUser()->getId();
         $order = new Orders();
         $quantity = new Quantity();
         $pOq = new ProductOrderQunatity();
@@ -59,6 +62,7 @@ class OrderController extends AbstractController
 
         $order->setOrderCode($this->orderCode);
         $order->setAddress($param['address']);
+        $order->setUserId($user);
         $order->setCreatedAt($this->nowDate);
         $create = $this->getDoctrine()->getManager();
         $create->persist($order);
@@ -72,7 +76,7 @@ class OrderController extends AbstractController
         $createQ->flush();
         $quantityId = $quantity->getId();
 
-        $user = $this->get('security.token_storage')->getToken()->getUser()->getId();
+
         $pOq->setProductId($param['product_id']);
         $pOq->setOrderId($id);
         $pOq->setQuantityId($quantityId);
@@ -86,17 +90,15 @@ class OrderController extends AbstractController
     }
 
     /**
-     * @Route("/api/shipping-date", name="shipping_date", methods={"POST"})
+     * @Route("/api/shipping-date/{id}", name="shipping_date", methods={"PUT"})
      */
-    public function shipping_date(Request $request): Response
+    public function shipping_date($id): Response
     {
-        $order = new Orders();
-        $param = json_decode($request->getContent(),true);
-
-        $order->setShippingDate($param['shipping_date']);
-        $create = $this->getDoctrine()->getManager();
-        $create->persist($order);
-        $create->flush();
+        $orderData = $this->getDoctrine()->getRepository(Orders::class)->find($id);
+            $orderData->setShippingDate($this->nowDate);
+            $shippingCreate = $this->getDoctrine()->getManager();
+            $shippingCreate->persist($orderData);
+            $shippingCreate->flush();
 
         return $this->json('Successfully');
 
@@ -106,12 +108,13 @@ class OrderController extends AbstractController
      */
     public function update(Request $request, $id): Response{
 
+        $user = $this->get('security.token_storage')->getToken()->getUser()->getId();
         $productOrderQuantityData = $this->getDoctrine()->getRepository(ProductOrderQunatity::class)->find($id);
         $orderData = $this->getDoctrine()->getRepository(Orders::class)->find($productOrderQuantityData->getOrderId());
         $quantityData = $this->getDoctrine()->getRepository(Quantity::class)->find($productOrderQuantityData->getQuantityId());
         $param = json_decode($request->getContent(),true);
-        if ($orderData->getId() && $orderData->getShippingDate() === null)
-        {
+        if ($orderData->getUserId() === $user) {
+            if ($orderData->getId() && $orderData->getShippingDate() === null) {
                 $orderData->setAddress($param['address']);
                 $orderData->setUpdatedAt($this->nowDate);
                 $update = $this->getDoctrine()->getManager();
@@ -119,15 +122,14 @@ class OrderController extends AbstractController
                 $update->flush();
                 $orderId = $orderData->getId();
 
-            if ($quantityData->getId())
-            {
-                $quantityData->setQuantity($param['quantity']);
-                $quantityData->setUpdatedAt($this->nowDate);
-                $updateQ = $this->getDoctrine()->getManager();
-                $updateQ->persist($quantityData);
-                $updateQ->flush();
-                $quantityId = $quantityData->getId();
-            }
+                if ($quantityData->getId()) {
+                    $quantityData->setQuantity($param['quantity']);
+                    $quantityData->setUpdatedAt($this->nowDate);
+                    $updateQ = $this->getDoctrine()->getManager();
+                    $updateQ->persist($quantityData);
+                    $updateQ->flush();
+                    $quantityId = $quantityData->getId();
+                }
                 $productOrderQuantityData->setProductId($param['product_id']);
                 $productOrderQuantityData->setOrderId($orderId);
                 $productOrderQuantityData->setQuantityId($quantityId);
@@ -135,11 +137,13 @@ class OrderController extends AbstractController
                 $updateOq->persist($productOrderQuantityData);
                 $updateOq->flush();
 
-            return $this->json('Successfully');
-        } else{
-            return $this->json('Sorry create for you shipping date!');
+                return $this->json('Successfully');
+            } else {
+                return $this->json('Sorry create for you shipping date!');
+            }
+        } else {
+            return $this->json('Sorry order not found!');
         }
-
     }
     /**
      * @Route("/api/orders/{id}", name="orders_delete", methods={"DELETE"})
@@ -159,11 +163,28 @@ class OrderController extends AbstractController
     /**
      * @Route("/api/orders-detail/{id}", name="orders_detail", methods={"GET"})
      */
-    public function show(int $id, OrdersRepository $ordersRepository): Response
+    public function show($id): Response
     {
-        $orders = $ordersRepository
-            ->find($id);
+        $user = $this->get('security.token_storage')->getToken()->getUser()->getId();
+        $productOrderQuantityData = $this->getDoctrine()->getRepository(ProductOrderQunatity::class)->find($id);
+        $orderData = $this->getDoctrine()->getRepository(Orders::class)->find($productOrderQuantityData->getOrderId());
+        $quantityData = $this->getDoctrine()->getRepository(Quantity::class)->find($productOrderQuantityData->getQuantityId());
+        $productData = $this->getDoctrine()->getRepository(Products::class)->find($productOrderQuantityData->getProductId());
+        $userData = $this->getDoctrine()->getRepository(User::class)->find($productOrderQuantityData->getUserId());
+        if ($user === $productOrderQuantityData->getUserId()){
+            $data=[
+                'Order Code'   => $orderData->getOrderCode(),
+                'Product Name' => $productData->getProductName(),
+                'Quantity' =>  $quantityData->getQuantity(),
+                'Address' =>  $orderData->getAddress(),
+                'Shipping Date' =>  $orderData->getShippingDate(),
+                'User' =>  $userData->getEmail(),
+            ];
+            return $this->json($data);
+        } else {
+            return new Response("Order information not found!");
+        }
 
-        return $this->json($orders);
+
     }
 }
